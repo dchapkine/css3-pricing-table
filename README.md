@@ -1,6 +1,9 @@
 Pure CSS3 Pricing Table + Pricing Table Maker (HTML5 App)
-Version 1.0 - 2011.09.30
 ===
+
+
+Version 1.0 - 2011.09.30
+
 
 
 ### "demo" folder contains:
