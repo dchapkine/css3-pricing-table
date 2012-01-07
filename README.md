@@ -1,11 +1,8 @@
-+-----------------------------------------------------------+
-| Pure CSS3 Pricing Table + Pricing Table Maker (HTML5 App) |
-|                                                           |
-| Version 1.0 - 2011.09.30                                  |
-+-----------------------------------------------------------+
+Pure CSS3 Pricing Table + Pricing Table Maker (HTML5 App) - Version 1.0 - 2011.09.30
+===
 
 
-"demo" folder contains:
+### "demo" folder contains:
 
 	+ Pure CSS3 pricing table demo (NO JavaScript)
 		+index.html
@@ -19,7 +16,7 @@
 
 
 
-"images" folder contains:
+### "images" folder contains:
 
 	- Screen Shots:
 		+ pricing-table-maker-design.png and pricing-table-maker-generate.png
@@ -44,7 +41,7 @@
 
 
 
-pricing-table-maker contains:
+### pricing-table-maker contains:
 
 	+ CSS3 pricing table maker (html5 app)
 		+pricing-table-maker.html
