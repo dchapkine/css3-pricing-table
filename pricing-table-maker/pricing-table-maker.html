@@ -1,0 +1,1223 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+<meta http-equiv="X-UA-Compatible" content="chrome=1"/>
+<link rel="stylesheet" type="text/css" href="css/index.packed.css"/>
+<link type="text/css" href="css/smoothness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/chrome-frame/1.0.2/CFInstall.min.js"></script>
+<script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
+<script>
+
+function trim (str, charlist) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   improved by: mdsjack (http://www.mdsjack.bo.it)
+    // +   improved by: Alexander Ermolaev (http://snippets.dzone.com/user/AlexanderErmolaev)
+    // +      input by: Erkekjetter
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +      input by: DxGx
+    // +   improved by: Steven Levithan (http://blog.stevenlevithan.com)
+    // +    tweaked by: Jack
+    // +   bugfixed by: Onno Marsman
+    // *     example 1: trim('    Kevin van Zonneveld    ');
+    // *     returns 1: 'Kevin van Zonneveld'
+    // *     example 2: trim('Hello World', 'Hdle');
+    // *     returns 2: 'o Wor'
+    // *     example 3: trim(16, 1);
+    // *     returns 3: 6
+    var whitespace, l = 0,
+        i = 0;
+    str += '';
+
+    if (!charlist) {
+        // default list
+        whitespace = " \n\r\t\f\x0b\xa0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u3000";
+    } else {
+        // preg_quote custom list
+        charlist += '';
+        whitespace = charlist.replace(/([\[\]\(\)\.\?\/\*\{\}\+\$\^\:])/g, '$1');
+    }
+
+    l = str.length;
+    for (i = 0; i < l; i++) {
+        if (whitespace.indexOf(str.charAt(i)) === -1) {
+            str = str.substring(i);
+            break;
+        }
+    }
+
+    l = str.length;
+    for (i = l - 1; i >= 0; i--) {
+        if (whitespace.indexOf(str.charAt(i)) === -1) {
+            str = str.substring(0, i + 1);
+            break;
+        }
+    }
+
+    return whitespace.indexOf(str.charAt(0)) === -1 ? str : '';
+}
+
+function utf8_encode (argString) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Webtoolkit.info (http://www.webtoolkit.info/)
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   improved by: sowberry
+    // +    tweaked by: Jack
+    // +   bugfixed by: Onno Marsman
+    // +   improved by: Yves Sucaet
+    // +   bugfixed by: Onno Marsman
+    // +   bugfixed by: Ulrich
+    // +   bugfixed by: Rafal Kukawski
+    // *     example 1: utf8_encode('Kevin van Zonneveld');
+    // *     returns 1: 'Kevin van Zonneveld'
+
+    if (argString === null || typeof argString === "undefined") {
+        return "";
+    }
+
+    var string = (argString + ''); // .replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    var utftext = "",
+        start, end, stringl = 0;
+
+    start = end = 0;
+    stringl = string.length;
+    for (var n = 0; n < stringl; n++) {
+        var c1 = string.charCodeAt(n);
+        var enc = null;
+
+        if (c1 < 128) {
+            end++;
+        } else if (c1 > 127 && c1 < 2048) {
+            enc = String.fromCharCode((c1 >> 6) | 192) + String.fromCharCode((c1 & 63) | 128);
+        } else {
+            enc = String.fromCharCode((c1 >> 12) | 224) + String.fromCharCode(((c1 >> 6) & 63) | 128) + String.fromCharCode((c1 & 63) | 128);
+        }
+        if (enc !== null) {
+            if (end > start) {
+                utftext += string.slice(start, end);
+            }
+            utftext += enc;
+            start = end = n + 1;
+        }
+    }
+
+    if (end > start) {
+        utftext += string.slice(start, stringl);
+    }
+
+    return utftext;
+}
+
+function base64_encode (data) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Tyler Akins (http://rumkin.com)
+    // +   improved by: Bayron Guevara
+    // +   improved by: Thunder.m
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   bugfixed by: Pellentesque Malesuada
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   improved by: Rafał Kukawski (http://kukawski.pl)
+    // -    depends on: utf8_encode
+    // *     example 1: base64_encode('Kevin van Zonneveld');
+    // *     returns 1: 'S2V2aW4gdmFuIFpvbm5ldmVsZA=='
+    // mozilla has this native
+    // - but breaks in 2.0.0.12!
+    //if (typeof this.window['atob'] == 'function') {
+    //    return atob(data);
+    //}
+    var b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
+        ac = 0,
+        enc = "",
+        tmp_arr = [];
+
+    if (!data) {
+        return data;
+    }
+
+    data = this.utf8_encode(data + '');
+
+    do { // pack three octets into four hexets
+        o1 = data.charCodeAt(i++);
+        o2 = data.charCodeAt(i++);
+        o3 = data.charCodeAt(i++);
+
+        bits = o1 << 16 | o2 << 8 | o3;
+
+        h1 = bits >> 18 & 0x3f;
+        h2 = bits >> 12 & 0x3f;
+        h3 = bits >> 6 & 0x3f;
+        h4 = bits & 0x3f;
+
+        // use hexets to index into b64, and append result to encoded string
+        tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
+    } while (i < data.length);
+
+    enc = tmp_arr.join('');
+    
+    var r = data.length % 3;
+    
+    return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
+
+}
+
+
+
+
+
+
+if (typeof String.prototype.startsWith != 'function')
+{
+  String.prototype.startsWith = function (str){
+    return this.indexOf(str) == 0;
+  };
+}
+
+//function loadColumnData(colid, )
+
+/*
+function buildPriceTable(val)
+{
+	var arr = val.split("\n\n\n");
+	var s = "";
+	var yepnope = [];
+	var nl = "\n";
+	
+	for (var i in arr)
+	{
+		var l = trim(arr[i]).split("\n");
+	
+	
+		var tmp = [];
+		
+		for (var j in l)
+		{
+			var tmp2 = '';
+			if (trim(l[j]) != "")
+			{
+				if (trim(l[j]).startsWith("[V]"))
+				{
+					tmp2 = 'yes';
+					l[j] = trim(l[j]).replace('[V]', '');
+				}
+				else if (trim(l[j]).startsWith("[X]"))
+				{
+					tmp2 = 'no';
+					l[j] = trim(l[j]).replace('[X]', '');
+				}
+			}
+			tmp.push(tmp2);
+		}
+		
+		arr[i] = l.join(";");
+		
+		yepnope.push(tmp);
+	}
+	
+	for (var i in arr)
+	{
+		if (trim(arr[i]) != "")
+		{
+		
+			var l = trim(arr[i]).split(";");
+			var f = trim(l[1]).split(" ");
+			
+			s += '<div class="column">';
+			s += nl;
+			s += '	<div class="row head '+l[l.length-2]+'">'+l[0].split('').join('<br/>')+'</div>';
+			s += nl;
+			s += '	<div class="body">';
+			s += nl;
+				
+			if (f.length < 2)
+			{
+				s += '	<div class="row pricerow2">';
+				s += nl;
+				s += '		'+l[0];
+				s += '	</div>';
+				s += nl;
+			}
+			else
+			{
+				s += '	<div class="row pricerow">';
+				s += nl;
+				s += '		<div class="curency">'+f[1]+'</div>';
+				s += nl;
+				s += '		<div class="price">'+f[0].split(".")[0]+'</div>';
+				s += nl;
+				s += '		<div class="cents">.'+f[0].split(".")[1]+'</div>';
+				s += nl;
+				s += '		<div class="priceby">'+f[2]+'</div>';
+				s += nl;
+				s += '	</div>';
+				s += nl;
+			}
+			
+			for (var j = 2; j < (l.length-3); j++)
+			{
+				s += '	<div class="row feature '+yepnope[i][j]+'">'+l[j]+'</div>';
+				s += nl;
+			}
+			s += '	<div class="row signup '+l[l.length-2]+'2"><a target="_blanck" href="'+l[l.length-1]+'">'+l[l.length-3]+'</a></div>';
+			s += nl;
+			s += '	</div>';
+			s += nl;
+			s += '	<div class="cl"></div>';
+			s += nl;
+			s += '</div>';
+			s += nl;
+		}
+	}
+	
+	document.getElementById("pricingtable").innerHTML = s;
+	document.getElementById("g").value = s;
+	
+}
+*/
+
+var app = {
+	selectedCol: null,
+	snippet: {}
+};
+
+
+
+function generate()
+{
+	
+	var s = "";
+	var nl = "\n";
+	
+	s += '.pricingtable' + nl;
+	s += '{' + nl;
+	s += '	border-radius: 10px;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable a' + nl;
+	s += '{' + nl;
+	s += '	color: #fff;' + nl;
+	s += '	text-decoration: none;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable a:active' + nl;
+	s += '{' + nl;
+	s += '	color: white;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable a:hover' + nl;
+	s += '{' + nl;
+	s += '	text-decoration: none;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable a:visited' + nl;
+	s += '{' + nl;
+	s += '	text-decoration: none;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column' + nl;
+	s += '{' + nl;
+	s += '	float: left;' + nl;
+	s += '	width: ' + $("#edit-colsize").val() + 'px;' + nl;
+	s += '	height: 100%;' + nl;
+	s += '	' + nl;
+	s += '	background-color: #fafafa;' + nl;
+	s += '	background-image: linear-gradient(left, #f0f0f0 0%, #fafafa 44%, #fafafa 86%, #f0f0f0 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(left, #f0f0f0 0%, #fafafa 44%, #fafafa 86%, #f0f0f0 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(left, #f0f0f0 0%, #fafafa 44%, #fafafa 86%, #f0f0f0 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(left, #f0f0f0 0%, #fafafa 44%, #fafafa 86%, #f0f0f0 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(left, #f0f0f0 0%, #fafafa 44%, #fafafa 86%, #f0f0f0 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f0f0f0', endColorstr='#fafafa',GradientType=1);" + nl;
+	s += '	' + nl;
+	s += '	cursor: normal;' + nl;
+	s += '	' + nl;
+	s += '	overflow: hidden;' + nl;
+	s += '	/*border: 0px solid white;*/' + nl;
+	s += '	' + nl;
+	s += '	' + nl;
+	s += '	transform: scale(1);' + nl;
+	s += '	transition-timing-function: ease-out;' + nl;
+	s += '	transition-duration: 100ms;' + nl;
+	s += '	' + nl;
+	s += '	-webkit-transform: scale(1);' + nl;
+	s += '	-webkit-transition-timing-function: ease-out;' + nl;
+	s += '	-webkit-transition-duration: 100ms;' + nl;
+	s += '	' + nl;
+	s += '	-moz-transform: scale(1);' + nl;
+	s += '	-moz-transition-timing-function: ease-out;' + nl;
+	s += '	-moz-transition-duration: 100ms;' + nl;
+	s += '	' + nl;
+	s += '	-o-transform: scale(1);' + nl;
+	s += '	-o-transition-timing-function: ease-out;' + nl;
+	s += '	-o-transition-duration: 100ms;' + nl;
+	s += '	' + nl;
+	s += '	-ms-transform: scale(1);' + nl;
+	s += '	-ms-transition-timing-function: ease-out;' + nl;
+	s += '	-ms-transition-duration: 100ms;' + nl;
+	s += '	' + nl;
+	s += '	position: relative;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+
+
+	s += '.pricingtable > .column:hover' + nl;
+	s += '{   ' + nl;
+	s += '	background-color: #fafafa;' + nl;
+	s += '	background-image: linear-gradient(left, #fafafa 0%, #fafafa 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(left, #fafafa 0%, #fafafa 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(left, #fafafa 0%, #fafafa 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(left, #fafafa 0%, #fafafa 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(left, #fafafa 0%, #fafafa 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fafafa', endColorstr='#fafafa',GradientType=1);" + nl;
+	s += '	' + nl;
+	s += '	z-index: 2;' + nl;
+	s += '	box-shadow: 0px 0px 32px #000;' + nl;
+	s += '	position: relative;' + nl;
+	s += '	' + nl;
+	s += '	transform: scale(1.05);' + nl;
+	s += '	-webkit-transform: scale(1.05);' + nl;
+	s += '	-moz-transform: scale(1.05);' + nl;
+	s += '	-o-transform: scale(1.05);' + nl;
+	s += '	-ms-transform: scale(1.05);' + nl;
+	s += '	' + nl;
+	s += '	/*border: 0px solid white;*/' + nl;
+	s += '	' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .head' + nl;
+	s += '{' + nl;
+	s += '	position: absolute;' + nl;
+	s += '	left: 0px;' + nl;
+	s += '	top: 0px;' + nl;
+	s += '	bottom: 0px;' + nl;
+
+	s += '	padding: 10px;' + nl;
+	s += '	margin-left: 0px;' + nl;
+	s += '	margin-right: 0px;' + nl;
+	s += '	color: white;' + nl;
+	s += '	text-shadow: 0px 0px black;' + nl;
+	s += '	text-align: center;' + nl;
+	s += '	font-weight: bold;' + nl;
+	s += '	font-size: 20px;' + nl;
+	s += '	/*border-bottom: 1px solid #ccc;*/' + nl;
+	s += '	' + nl;
+	s += '	' + nl;
+	s += '	width: 20px;' + nl;
+	s += '	font-family: monospace;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body' + nl;
+	s += '{' + nl;
+	s += '	margin-left: 40px;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .green' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(bottom, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(bottom, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(bottom, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(bottom, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(bottom, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#9fc25d', endColorstr='#bbdd77',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .green2' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(top, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(top, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(top, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(top, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(top, #bbdd77 0%, #9fc25d 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#bbdd77', endColorstr='#9fc25d',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .green2:hover' + nl;
+	s += '{' + nl;
+	s += '	background: #bbdd77 !important;;' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#bbdd77', endColorstr='#bbdd77',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .blue' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(bottom, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(bottom, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(bottom, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(bottom, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(bottom, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3ba3c9', endColorstr='#64cdf2',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .blue2' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(top, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(top, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(top, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(top, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(top, #64cdf2 0%, #3ba3c9 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#64cdf2', endColorstr='#3ba3c9',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .blue2:hover' + nl;
+	s += '{' + nl;
+	s += '	background: #64cdf2 !important;' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#64cdf2', endColorstr='#64cdf2',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .orange' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(bottom, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(bottom, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(bottom, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(bottom, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(bottom, #f2c256 0%, #e59440 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e59440', endColorstr='#f2c256',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .orange2' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(top, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(top, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(top, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(top, #f2c256 0%, #e59440 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(top, #f2c256 0%, #e59440 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f2c256', endColorstr='#e59440',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .orange2:hover' + nl;
+	s += '{' + nl;
+	s += '	background: #f2c256 !important;' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f2c256', endColorstr='#f2c256',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .black' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(bottom, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(bottom, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(bottom, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(bottom, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(bottom, #888 0%, #000 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#000000', endColorstr='#888888',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .black2' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(top, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(top, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(top, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(top, #888 0%, #000 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(top, #888 0%, #000 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#888888', endColorstr='#000000',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .black2:hover' + nl;
+	s += '{' + nl;
+	s += '	background: #888 !important;' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#888888', endColorstr='#888888',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+
+	s += '.pricingtable .red' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(bottom, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(bottom, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(bottom, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(bottom, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(bottom, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ae2a2a', endColorstr='#e31919',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .red2' + nl;
+	s += '{' + nl;
+	s += '	background-image: linear-gradient(top, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -o-linear-gradient(top, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -moz-linear-gradient(top, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -webkit-linear-gradient(top, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += '	background-image: -ms-linear-gradient(top, #e31919 0%, #ae2a2a 100%);' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e31919', endColorstr='#ae2a2a',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable .red2:hover' + nl;
+	s += '{' + nl;
+	s += '	background: #e31919 !important;;' + nl;
+	s += "	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e31919', endColorstr='#e31919',GradientType=0); " + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+
+
+	s += '.pricingtable > .column > .cl' + nl;
+	s += '{' + nl;
+	s += '	clear: left;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+
+	s += '.pricingtable > .column > .body > .row' + nl;
+	s += '{' + nl;
+	s += '	padding: 15px;' + nl;
+	s += '	padding-left: 50px;' + nl;
+	s += '	padding-right: 0px;' + nl;
+	s += '	font: normal 15px arial,sans-serif;' + nl;
+	s += '	line-height: 22px;' + nl;
+	s += '	height: ' + $("#edit-rowsize").val() + 'px;' + nl;
+	s += '	' + nl;
+	s += '	color: #525252;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .row:nth-child(odd)' + nl;
+	s += '{' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .row:nth-child(even)' + nl;
+	s += '{' + nl;
+	s += '	background-color: #eee;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .yes' + nl;
+	s += '{' + nl;
+	s += '	background-image: url(yes.png);' + nl;
+	s += '	background-repeat: no-repeat;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .no' + nl;
+	s += '{' + nl;
+	s += '	background-image: url(no.png);' + nl;
+	s += '	background-repeat: no-repeat;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .pricerow' + nl;
+	s += '{' + nl;
+	s += '	padding: 20px;' + nl;
+	s += '	padding-top: 30px;' + nl;
+	s += '	padding-left: 35%;' + nl;
+	s += '	height: 30px;' + nl;
+	s += '	color: #525252;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .pricerow2' + nl;
+	s += '{' + nl;
+	s += '	padding: 20px;' + nl;
+	s += '	padding-top: 30px;' + nl;
+	s += '	font-size: 30px;' + nl;
+	s += '	height: 30px;' + nl;
+	s += '	text-align: center;' + nl;
+	s += '	color: #525252;' + nl;
+	s += '	font-weight: bold;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+
+	s += '.pricingtable > .column > .body > .pricerow > .price' + nl;
+	s += '{' + nl;
+	s += '	font-size: 32px;' + nl;
+	s += '	float: left;' + nl;
+	s += '	font-weight: bold;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .pricerow > .cents' + nl;
+	s += '{' + nl;
+	s += '	font-size: 15px;' + nl;
+	s += '	float: left;' + nl;
+	s += '	line-height: 10px;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .pricerow > .curency' + nl;
+	s += '{' + nl;
+	s += '	font-size: 18px;' + nl;
+	s += '	float: left;' + nl;
+	s += '	line-height: 9px;' + nl;
+	s += '	padding-right: 8px;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .pricerow > .priceby' + nl;
+	s += '{' + nl;
+	s += '	font-size: 10px;' + nl;
+	s += '	float: left;' + nl;
+	s += '	line-height: 32px;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .feature' + nl;
+	s += '{' + nl;
+	s += '	text-shadow: 1px 1px white;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	s += '.pricingtable > .column > .body > .signup' + nl;
+	s += '{' + nl;
+	s += '	padding: 10px;' + nl;
+	s += '	margin: 20px;' + nl;
+	s += '	color: white;' + nl;
+	s += '	text-shadow: 0px 0px black;' + nl;
+	s += '	text-align: center;' + nl;
+	s += '	font-weight: bold;' + nl;
+	s += '	font-size: 17px;' + nl;
+	s += '	/*border-top: 1px solid #CCC;*/' + nl;
+	s += '	cursor: pointer;' + nl;
+	s += '}' + nl;
+	s +=  nl;
+
+	
+	$("#css").val(s);
+	
+	s = s.replace("yes.png", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAAZiS0dEAJ8AwgBdLeRk2QAAAAlwSFlzAAAOwwAADsMBx2+oZAAAAAd0SU1FB9sJGw8lGM7m+y8AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAEoElEQVRo3u3Xa2yTVRzH8d+/7dP72lXadWxsHW7MVTbmJchlzG0MmEwnEV2ikYH6hgUMkCCXxRATI4oR3TpuXnCJRoVEFMxECcGYAS5jywi3rLuAu3aja7uNdettz/McXwAvTNSEUWcWn8+b581JzvkmzzknB5BIJBKJRCKRSCSS/5MDIADA19BbHYaqwprc93Y1vcEBQPw2PU2PiIN3Il6Gwvq5/uC6b19kb/+8iy09uHAPADkAaDfgnmPkUx5yEkAZFKZ8ReUyw8qNafJ0eP0eOPucS3w2n1pMwNmJIxD+s5D0j1NItYrIXxv66wEOEE4BqIQubo62apmxaMNsRRrzhNyo6/wVPYEuiuOsOeKQEI508OfudX5FtELay7vYPw7YDAY1FBaNZm+eqbA8VZMOT9iN+pFz1MF1wZoUi8zxLOFap3PYj757nl8WlYoazLTU6D7iPkPB347JBWeolFXmxueXp5pT4VO5WUP4PPXEdMFkVUPnMkwwD7apnwx8MqW/+oITGbc35GuwPHwsufaD5t2s+GReL/YjHwDwKch8VHF7zEZwCd/oD71wupjtaNwkrq8vE584aWeJJ3TinO+tbOYWU0S9VLb57q9uX5MydZvdddSL0tri+PSMlMNPJzxXssiUIxqVJuOg0JPfX+C9hPXoChwTgblQzHo1piovoXDDQzPs8MOPlsBVGlJ6YEAsjZ4N8d5LQzuF+Wyf+BsEW6mVrh91sanb7Cthtqdl1KyYU/RM5ox5gocflGvUWjbLkGQaZe6lriJPQ+m+AjdlC45F1tyNGTPsbJzG0BZqoVvqIcQwI26eGeZvtnh2GrbCMV4OQV0C8h0fZ5NZzuRD5sGYnZpV2o/eB9vFVkqMmUURipBaqRKTjMmxY7wvlxvRFyxPearMEhOHoCyIG3w7jaqGmQ4G6qlz867uge2pR+TVvWlMULwEinwHNtnlTD7EibGc5xc0B4dD2W3hFlu/thcWVRw4TkkqlZol6pPMcZq4jNjYWIRlQdYl3qCA1g8t6amzvo/v6++tyHFw1U3E8/q3QKH9k4+4r5D3v3yX9qz70DP8wGA9RMrya2+l+ExuppSrSKvUkkarYXqDlo2Rn1zUTQH1GFPLtHT9cndgwHuzYlPFQscX9Ltg3Csn/5uM3e/hM+mQM8d/AQD4Lwd93syRJoSFLJ1Rb4vEjyMij0Cn1BMvj9CAvA9hXRAcqaito5Mf8vsqflj7zr41dEBIOGwg7+shFo1TNDo3eyM8Y/nhC+GB4CNmkyVZM5tDQOZHgAtA1AlQiByutbYLt4IjFW1FVxyJlCssuJBBrc+6WLSug6iEyMuIWBU8wZLQ+UBfMNtstNgSEq1MpVBDNaGhq87WiSAf2H5xsbOaSCMsbs6ihvktLJr3WlRC2JU731PwGV5RNA3c8GUl62w2mzGFmp2XBSVT7Tz9eF01EfFru1fTj/a6qEb8a2b/ZLY/+lVmY2njKr7kyoqtjDE5AOzmd0yTtwYA5N1+SyzvWDi3uDW/uJ4dVwFA2eDqaRRx16Y/P4y2eMqnYcQdSxoeo+KLhTJIJBKJRCKRSCSSKPsDHWzIvgcpM0wAAAAASUVORK5CYII=");
+	s = s.replace("no.png", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAAZiS0dEAJ8AwgBdLeRk2QAAAAlwSFlzAAAOwwAADsMBx2+oZAAAAAd0SU1FB9sJGw8lJ3iA1hIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAEvklEQVRo3u3XW0xURxgH8P+cmT179uwugiysXAxQcOMqimIaNGJRvNEKGLRNS0tSqRhrb0nTlpoaY/VBE5o0VVtjbFNTS9vYxjSkRWuFUHkQK+I1gqxSRBRB5GLZZXfPbfogqWnimzSLyfk9n5z5/mdmznwDmEwmk8lkMplMJtOjlQHkiSl2ETBvI/C1E3ADQDEgAMBzD0OIG4Dda4AiAPjGwoQJF8ICeA94ve3nysv5rvj43wFEA0DVWBgA+EAUv2rMy+PV0zxD84Bl4zk+Ha8QX3g8NSsqKjxxCxboSU5HxtRr1+bXB4NHTwABAORDUTxYvGTJawnZ2Zp7coycNjJc4h+639IBdHRGMbI7bEQ2SC4wb4vX+9OKigqPOGWKHuzvp7LbbUyNiUlL6eiYUxcK/VFJharVy5auT8icaWijI5TZLDw5NsqaNNhTaAuGW8uDRvtxJ0i1EsEgBcDO4lWrlrpycvRQ/z0KTYPq9xM5Lg7Jk6PTs/vulC7Oy81LypoFPewnGOyF2n6J8L/aeLw6YhsiRuqJkO1QtaLpEZ2RVuB08u3bWUlOR4bsjje0gJ8Iugoj6Ic8ycE93mlOZ5Kb671dRDnfBO1KM+hAL2f6KDmvGW3VAVJ2U1X79rlBagMRDKIBgfrR0V/SOq/PT3NFp9njXOChAJihgOhhQhi4evUiUc40gAzehc1qcMlGyDkdndsGSHFLkLd9mQjh9V7wiM5IESD4gOCJ0eBRb0/nnNS4SelSlJ0LepgIhgL9UhMxLv8JkWqw2QmYSMhFBVe29JKS1iBv25sAuukOjMetY1wOqT02CO8EYQCYesTral6yZq1bZ5TrF08Rre0CqCiAMAqRCfApglJ2NbT8epg3/uCxslJfWBuPGh77QFrnABkLgc8ShK3ZT2e5mUS50N1KyI3LEKOsYA4bmEMGHA6kupzizlkxHwGILvWFtZr8lHH5mI/1ksopIFVja/vzVPHg6sW562K9mVAG+6A1NwBKCBBFEEpBGAOhFNTCuEoE0nAvfPL5xu61AAYq5yYKVed7jEgvLXFvhrRvTf6i9ZMzvIaqqYLhuwC9qx1UlsEYg0EFcOFBGDAKZrFwFQKp6/XXrz3W/hKAe9vmp5Dtp7t4xDb7jhTLp2XLn9nkmpGlqeEwJcooeLcPzCpySBLpCCPsdMrMKssckpVQSQIkiUh2yciIn5SeHuuYXeO7e/jkrftGRPdIn2LU3RoaHkbIz6hk5QgMg1kop1FOctZvXHnxZPfKxiH1N122EavTwYndDmaXwaKcwm2d8p6gWgtA47++TSL6+232c1/fzZ6W6TGWkuREt1X4u58TaOTUoNL5blN3Sdtw6OzhawO1OSlxC55KiEmVZJtB7XbS6VdxoKVr446Gq/sBYPv3ZyLb9bbkJwsAUJbqWHGufNGg8v4yXv9CVusMl2M6APxc4GFjj8bWvJpbp31Sym9sLTE2L83cAAD8yJsTr5V/Lzux6FBhZlNBRvxMAPj2WS8FgNqXcx4sG4G6Dr2y8NiuwrlvAQA/XjnxQvCt+f9engDgx+JZ/yly82Kv8LDrn+BG3lhIAOC7osxHbtyPV84mAMBv7nlyrr0mk8lkMplMJpPp//IPeGXHUFfms8kAAAAASUVORK5CYII=");
+	
+	app.snippet = {
+		project: {
+			title: "Custom Css3 Pricing Table",
+			html: "<div class='pricingtable'>\n\n" + $(".pricingtable").html() + "\n\n</div>",
+			css: s,
+			js: ""
+		}
+	};
+	
+	$("#cssalt").val(app.snippet.project.css);
+	$("#html").val(app.snippet.project.html);
+	
+}
+
+function gotoSnippet()
+{
+	generate();
+	window.open("http://html5snippet.net/#b64/"+base64_encode(JSON.stringify(app.snippet)));
+}
+
+function updateColumn()
+{
+	var el = app.selectedCol;
+	
+	//
+	el.find(".head").html($("#edit-coltitle").val().split('').join('<br/>'));
+	
+	//
+	if ($("#edit-pricetype:checked").length > 0)// && el.find(".pricerow").length > 0)
+	{
+		el.find(".pricerow").html('').removeClass('pricerow').addClass('pricerow2');
+		$("#edit-colprice").prev().html("Price: ");
+	}
+	else if ($("#edit-pricetype:checked").length == 0)// && el.find(".pricerow2").length > 0)
+	{
+		var s = "";
+		s += '<div class="curency"></div>';
+		s += '<div class="price"></div>';
+		s += '<div class="cents"></div>';
+		s += '<div class="priceby"></div>';
+		
+		el.find(".pricerow2").html(s).removeClass('pricerow2').addClass('pricerow');
+		$("#edit-colprice").prev().html("Price (examples: \"<small>42.00 $ /month</small>\", \"<small>1 $ every day</small>\", ...)");
+	}
+	
+	//
+	if ($("#edit-pricetype:checked").length > 0)// && el.find(".pricerow").length > 0)
+	{
+		el.find(".pricerow2").html($("#edit-colprice").val());
+	}
+	else if ($("#edit-pricetype:checked").length == 0)// && el.find(".pricerow2").length > 0)
+	{
+		var f = trim($("#edit-colprice").val()).split(" ");
+		
+		el.find(".pricerow > .price").html(f[0].split(".")[0]);
+		el.find(".pricerow > .cents").html((f[0].split(".")[1] != undefined)?'.'+f[0].split(".")[1]:'');
+		el.find(".pricerow > .curency").html(f[1]);
+		
+		f[0] = '';
+		f[1] = '';
+		f = trim(f.join(' '));
+		el.find(".pricerow > .priceby").html(f);
+	}
+	
+	//
+	el.find("> .body > .feature").remove();
+	var arr = $("#edit-features").val().split("\n");
+	var html = "";
+	
+	for (var i in arr)
+	{
+		if (trim(arr[i]) != "")
+		{
+			var tmp2 = "";
+			var s = trim(arr[i]);
+			if (s.startsWith("[V]"))
+			{
+				tmp2 = 'yes';
+				s = s.replace('[V]', '');
+			}
+			else if (s.startsWith("[X]"))
+			{
+				tmp2 = 'no';
+				s = s.replace('[X]', '');
+			}
+			html += '<div class="row feature '+tmp2+'">'+s+'</div>';
+		}
+	}
+	$(html).insertAfter(el.find(".body > *:first-child"));
+	
+	//
+	el.find(".signup a").html($("#edit-colsignup").val());
+}
+
+function setColumn(val)
+{
+	app.selectedCol = $($(".pricingtable > *")[parseInt(val) - 1]);
+	var el = app.selectedCol;
+	
+	//
+	$("#edit-coltitle").val(trim(el.find(".head").html().replace(/\<br\>/g, '')));
+	
+	//
+	if (el.find(".pricerow").length > 0)
+	{
+		$("#edit-pricetype").removeAttr('checked');
+		$("#edit-colprice").val(trim(el.find(".pricerow > .price").html() + '' + el.find(".pricerow > .cents").html() + ' ' + el.find(".pricerow > .curency").html() + ' ' + el.find(".pricerow > .priceby").html())); 
+	}
+	else
+	{
+		$("#edit-pricetype").attr('checked', 'checked');
+		$("#edit-colprice").val(trim(el.find(".pricerow2").html()));
+	}
+	
+	//
+	var s = "";
+	el.find(".feature").each(function() {
+		if ($(this).hasClass('yes'))
+		{
+			s += "[V]";
+		}
+		else if ($(this).hasClass('no'))
+		{
+			s += "[X]";
+		}
+		
+		s += trim($(this).html()) + "\n";
+	});
+	$("#edit-features").val(s);
+	
+	//
+	$("#edit-colsignup").val(trim(el.find(".signup a").html()));
+}
+
+
+$(function(){
+	//buildPriceTable(document.getElementById("ta").value);
+	
+	$("#edit-colsize").bind('change', function()
+	{
+		$(".column").css("width", $(this).val()+"px");
+	});
+	
+	$("#edit-rowsize").bind('change', function()
+	{
+		$(".feature").css("height", $(this).val()+"px");
+	});
+	
+	setInterval(function(){
+		
+		$(".column").css("width", $("#edit-colsize").val()+"px");
+		$(".feature").css("height", $("#edit-rowsize").val()+"px");
+	}, 200);
+	
+	
+	$("#edit-col1-color, #edit-col2-color, #edit-col3-color, #edit-col4-color").bind('change', function()
+	{
+		var tmp = parseInt($(this).attr('data-colid')) + 1;
+		$(".pricingtable > .column:nth-child("+tmp+") .head")
+		.removeClass("green")
+		.removeClass("blue")
+		.removeClass("orange")
+		.removeClass("red")
+		.removeClass("black")
+		.addClass($(this).val());
+		
+		
+		$(".pricingtable > .column:nth-child("+tmp+") .signup")
+		.removeClass("green2")
+		.removeClass("blue2")
+		.removeClass("orange2")
+		.removeClass("red2")
+		.removeClass("black2")
+		.addClass($(this).val()+"2");
+	});
+	
+	// update
+	$("#edit-coltitle, #edit-colprice, #edit-pricetype, #edit-features, #edit-colsignup").bind('keyup', updateColumn);
+	$("#edit-pricetype").bind('change', updateColumn);
+	
+	// first column selected
+	setColumn(1);
+	
+	
+	//
+	$(".options").tabs();
+	
+	
+	//
+	CFInstall.check({
+      mode: "overlay"
+    });
+});
+
+</script>
+<style>
+
+body
+{
+	
+	background: -moz-radial-gradient(#aedae5, #d8edf2);  
+	background: -webkit-radial-gradient(#aedae5, #d8edf2);
+	font-size: 12px;
+}
+
+
+textarea
+{
+	width: 492px;
+	height: 135px;
+}
+
+.fl
+{
+	float: left;
+}
+
+.cl
+{
+	clear: left;
+}
+
+.m10
+{
+	margin: 10px;
+}
+
+.root
+{
+	width: 1210px;
+	padding: 25px;
+	background-color: #fff;
+	margin-left: auto;
+	margin-right: auto;
+	
+}
+
+.options
+{
+	margin-top: 50px;
+	margin-bottom: 50px;
+}
+
+.options .grp
+{
+	float: left;
+	width: 313px;
+	min-height: 370px;
+	border-radius: 5px;
+}
+
+
+.ui-tabs .ui-tabs-panel
+{
+	display: block;
+	border-width: 0;
+	padding: 0;
+	background: none;
+}
+
+.ui-widget-content
+{
+	border: none;
+	background: white url(images/ui-bg_flat_75_ffffff_40x100.png) 50% 50% repeat-x;
+	color: #222;
+}
+
+
+#design
+{
+	padding-top: 20px;
+}
+
+#generate
+{
+	padding-top: 20px;
+}
+
+
+
+</style>
+</head>
+<body onload="">
+
+
+<div class="root">
+
+	<div>
+		<h1>Welcome to "CSS3 Pricing Table Maker" !</h1>
+		<div>
+			Pricing Table Maker works with the following browsers:
+			<a target="_getchrome" href="http://www.google.com/chrome"><img height="24" src="img/chrome.jpg"/></a>
+			<a target="_getff" href="http://mozilla.org/firefox"><img height="24" src="img/ff.jpg"/></a>
+			<a target="_getsafari" href="http://www.apple.com/fr/safari/download/"><img height="24" src="img/safari.jpg"/></a>
+		</div>
+	</div>
+	
+	
+	<div class="options">
+	
+	
+		<ul>
+			<li><a href="#design">Design</a></li>
+			<li><a href="#generate">Generate</a></li>
+		</ul>
+		
+		<div id="design">
+		
+			<fieldset class="grp">
+				<legend>Sizes</legend>
+				<div class="">
+					<div>Column Size: </div><input id="edit-colsize" value="300" type="range"  min="100" max="400" />
+				</div>
+				<div class="">
+					<div>Row Size: </div><input id="edit-rowsize" value="25" type="range"  min="10" max="100" />
+				</div>
+			</fieldset>
+			
+			<fieldset class="grp">
+				<legend>Colors</legend>
+				<div class="fl m10">
+					<div>First Product: </div>
+					<select id="edit-col1-color" data-colid="0" size="5">
+						<option selected="true">green</option>
+						<option>blue</option>
+						<option>orange</option>
+						<option>red</option>
+						<option>black</option>
+					</select>
+				</div>
+				<div class="fl m10">
+					<div>Second Product: </div>
+					<select id="edit-col2-color" data-colid="1" size="5">
+						<option>green</option>
+						<option selected="true">blue</option>
+						<option>orange</option>
+						<option>red</option>
+						<option>black</option>
+					</select>
+				</div>
+				<div class="fl m10">
+					<div>Third Product: </div>
+					<select id="edit-col3-color" data-colid="2" size="5">
+						<option>green</option>
+						<option>blue</option>
+						<option selected="true">orange</option>
+						<option>red</option>
+						<option>black</option>
+					</select>
+				</div>
+				<div class="fl m10">
+					<div>Fourth Product: </div>
+					<select id="edit-col4-color" data-colid="3" size="5">
+						<option>green</option>
+						<option>blue</option>
+						<option>orange</option>
+						<option selected="true">red</option>
+						<option>black</option>
+					</select>
+				</div>
+				<div class="cl"></div>
+			</fieldset>
+			
+			<fieldset class="grp" style="width: 500px;">
+				<legend>Data</legend>
+				<div class="">
+					<div>Select Column: </div>
+					<select onchange="setColumn(this.value)">
+						<option>1</option>
+						<option>2</option>
+						<option>3</option>
+						<option>4</option>
+					</select>
+				</div>
+				<div class="">
+					<div>Title: </div>
+					<input id="edit-coltitle" type="text" value="Free"/>
+				</div>
+				<div class="">
+					<div>Price: </div>
+					<input id="edit-colprice" type="text" value="9.99 $ monthly"/>
+					Do not format the price text: <input id="edit-pricetype" type="checkbox"/>
+				</div>
+				<div class="">
+					<div>Features (one by line, html allowed): </div>
+					<textarea id="edit-features"></textarea>
+				</div>
+				<div class="">
+					<div>SignUp button text: </div>
+					<input id="edit-colsignup" type="text" value="Get It!"/>
+				</div>
+			</fieldset>
+			
+			<div style="clear:left"></div>
+			
+			
+			<div id="pricingtable" class="pricingtable" style="margin-top: 30px;">
+				
+				<div class="column">
+					<div class="head green">F<br/>R<br/>E<br/>E</div>
+					<div class="body">
+						<div class="row pricerow2">
+							Free
+						</div>
+						<div class="row feature no"><b>-</b></div>
+						<div class="row feature yes"><b>100 MB</b> of Storage</div>
+						<div class="row feature yes"><b>1</b> node.js instance</div>
+						<div class="row feature no"><b>No</b> Mongo DBs</div>
+						<div class="row feature no"><b>No</b> domains</div>
+						<div class="row feature no">Free beer for life</div>
+						<div class="row feature no">Love, Money & Power</div>
+						<div class="row signup green2"><a href="">Sign Up</a></div>
+					</div>
+					<div class="cl"></div>
+				</div>
+				
+				
+				<div class="column">
+					<div class="row head blue">B<br/>a<br/>s<br/>i<br/>c</div>
+					<div class="body">
+						<div class="row pricerow">
+							<div class="curency">$</div>
+							<div class="price">9</div>
+							<div class="cents">.99</div>
+							<div class="priceby">monthly</div>
+						</div>
+						<div class="row feature yes"><b>30 days</b> money back garantee</div>
+						<div class="row feature yes"><b>10 GB</b> of Storage</div>
+						<div class="row feature yes"><b>10</b> node.js instances</div>
+						<div class="row feature yes"><b>10</b> Mongo DBs</div>
+						<div class="row feature no"><b>No</b> domains</div>
+						<div class="row feature no">Free beer for life</div>
+						<div class="row feature no">Love, Money & Power</div>
+						<div class="row signup blue2"><a href="">Sign Up</a></div>
+					</div>
+					<div class="cl"></div>
+				</div>
+				<div class="column">
+					<div class="row head orange">P<br/>r<br/>o</div>
+					<div class="body">
+						
+						<div class="row pricerow">
+							<div class="curency">$</div>
+							<div class="price">19</div>
+							<div class="cents">.99</div>
+							<div class="priceby">monthly</div>
+						</div>
+						<div class="row feature yes"><b>30 days</b> money back garantee</div>
+						<div class="row feature yes"><b>20 GB</b> of Storage</div>
+						<div class="row feature yes"><b>20</b> node.js instances</div>
+						<div class="row feature yes"><b>30</b> Mongo DBs</div>
+						<div class="row feature yes"><b>1</b> domain</div>
+						<div class="row feature no">Free beer for life</div>
+						<div class="row feature no">Love, Money & Power</div>
+						<div class="row signup orange2"><a href="">Sign Up</a></div>
+					</div>
+					<div class="cl"></div>
+				</div>
+				<div class="column">
+					<div class="row head red">B<br/>u<br/>s<br/>i<br/>n<br/>e<br/>s<br/>s</div>
+					<div class="body">
+						
+						<div class="row pricerow">
+							<div class="curency">$</div>
+							<div class="price">29</div>
+							<div class="cents">.99</div>
+							<div class="priceby">monthly</div>
+						</div>
+						<div class="row feature yes"><b>30 days</b> money back garantee</div>
+						<div class="row feature yes"><b>Unlimited</b> Storage</div>
+						<div class="row feature yes"><b>Unlimited</b> node.js instances</div>
+						<div class="row feature yes"><b>Unlimited</b> Mongo DBs</div>
+						<div class="row feature yes"><b>Unlimited</b> domains</div>
+						<div class="row feature yes">Free beer for life</div>
+						<div class="row feature no">Love, Money & Power</div>
+						<div class="row signup red2"><a href="">Sign Up</a></div>
+					</div>
+					<div class="cl"></div>
+				</div>
+
+				<div style="clear: left"></div>
+			</div>
+			
+			
+			
+		</div>
+		
+		
+		<div id="generate">
+			
+			<div>
+				<button onclick="generate()">Generate The Code</button>
+				<button onclick="gotoSnippet()">Live Test</button>
+			</div>
+
+			<div>
+				<h2>Html markup: </h2><small>Copy/Paste the generated code in your html code</small>
+				<textarea style="width: 1195px;" id="html"></textarea>
+			</div>
+			
+			<div>
+				<h2>Custom css file: </h2><small>Copy/Paste the generated code into 'style.css'</small>
+				<textarea style="width: 1195px;" id="css"></textarea>
+			</div>
+			
+			<div>
+				<h2>Images:</h2><small>Right click -> Save Image As</small>
+				<br/>
+				<a target="_yes" href="img/yes.png"><img src="img/yes.png"/></a>
+				<a target="_no" href="img/no.png"><img src="img/no.png"/></a>
+			</div>
+		</div>
+		
+	</div>
+
+
+	
+
+
+
+
+</div>
+
+</body>
+</html>
