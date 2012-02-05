@@ -5,6 +5,8 @@ Pure CSS3 Pricing Table + Pricing Table Maker (HTML5 App)
 Version 1.0 - 2011.09.30
 
 
+![Screenshot](https://github.com/dchapkine/css3-pricing-table/raw/master/images/css3-pricing-table.png "Screenshot")
+
 
 ### "demo" folder contains:
 
